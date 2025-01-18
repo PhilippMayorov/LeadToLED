@@ -1,0 +1,10 @@
+[mqtt]
+host=mr-connection-g85vyfhrgam.messaging.solace.cloud
+port=8883
+username=solace-cloud-client
+password=qhqjs8vvh83kt7svtqh4io2832
+
+[bus]
+id=Bus-001
+route=Route-95
+update_interval=2
