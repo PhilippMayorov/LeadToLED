@@ -14,8 +14,10 @@ config = configparser.ConfigParser()
 config.read('config.properties')
 
 # Encode the password to handle special characters
-password = urllib.parse.quote_plus(config.get('mongo', 'password'))
-username = config.get('mongo', 'username')
+
+
+password = "digiPenPassword"
+username = "philipp"
 
 uri = os.getenv("uri")
 
@@ -49,7 +51,16 @@ def create_session_with_canvases():
                     "canvas_id": "canvas1_1",
                     "name": "First Canvas of Session 1",
                     "coordinates": [
-                        {"x": i*10, "y": i*20, "z": i*30} for i in range(10)
+                        {'x': 0, 'y': 0, 'z': 0},
+                        {'x': 1, 'y': 1, 'z': 0},
+                        {'x': 2, 'y': 0, 'z': 0},
+                        {'x': 3, 'y': 2, 'z': 0},
+                        {'x': 4, 'y': 1, 'z': 0},
+                        {'x': 5, 'y': 3, 'z': 0},
+                        {'x': 6, 'y': 2, 'z': 0},
+                        {'x': 7, 'y': 4, 'z': 0},
+                        {'x': 8, 'y': 3, 'z': 0},
+                        {'x': 9, 'y': 5, 'z': 0}
                     ]
                 },
                 {
