@@ -108,7 +108,7 @@ def main():
         while True:
             bus_data = simulate_circular_movement()
             topic = "coordinates"
-            client.publish(topic, json.dumps(bus_data))
+            client.publish(topic, json.dumps(bus_data), qos=1, retain=False)
             print(f"Published: {bus_data}")
             print(f"Time until next reset: {RESET_INTERVAL - (time.time() - last_reset_time):.1f} seconds")
             print("-------------------")

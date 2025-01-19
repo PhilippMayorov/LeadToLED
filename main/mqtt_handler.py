@@ -27,7 +27,7 @@ class MQTTHandler:
 
     def on_connect(self, client, userdata, flags, reason_code, properties=None):
         print(f"Connected with result code {reason_code}")
-        client.subscribe("coordinates")
+        client.subscribe("coordinates", qos=1)
 
     def on_message(self, client, userdata, message):
         try:
