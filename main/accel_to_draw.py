@@ -1,3 +1,4 @@
+
 from dataclasses import dataclass
 from typing import Tuple
 import numpy as np
@@ -17,114 +18,117 @@ class IMUPoint:
 
 class MotionProcessor:
     def __init__(self, window_size: int = 10):
-        self.window_size = window_size
-        self.imu_history = deque(maxlen=window_size)
-        
         # Motion states
-        self.velocity = np.zeros(3)
         self.position = np.zeros(3)
-        self.orientation = np.eye(3)  # Rotation matrix
         
-        # Timing
+        # Base values (from your stationary data)
+        self.accel_offset = np.array([-1950, 100, 17600])
+        
+        # Movement parameters
+        self.movement_speed = 50.0
+        self.rest_threshold = 200
+        
+        # Calibration state
+        self.is_calibrating = True
+        self.calibration_samples_x = deque(maxlen=20)  # Reduced sample size for quicker updates
+        self.calibration_samples_y = deque(maxlen=20)
+        self.accel_threshold_x = 250  # Initial values
+        self.accel_threshold_y = 650
+        
+        # State tracking
+        self.is_moving = False
+        self.current_direction = np.zeros(3)
+        self.rest_samples = deque(maxlen=8)
         self.last_timestamp = None
         
-        # Previous states for integration
-        self.last_accel = np.zeros(3)
-        self.last_gyro = np.zeros(3)
-        self.last_velocity = np.zeros(3)
+        # Add Y-axis stability tracking
+        self.y_samples = deque(maxlen=3)
+
+    def _update_thresholds(self, accel):
+        """Update thresholds based on current rest period readings"""
+        self.calibration_samples_x.append(accel[0])
+        self.calibration_samples_y.append(accel[1])
         
-        # Calibration parameters
-        self.accel_bias = np.array([203, -300, 17690])  # Adjust based on calibration
-        self.gyro_bias = np.array([0, 0, 0])  # Adjust based on calibration
-        
-        # Filter parameters
-        self.accel_threshold = 1.0
-        self.gyro_threshold = 0.1
-        
-    def add_point(self, ax: float, ay: float, az: float, 
-                 gx: float, gy: float, gz: float, timestamp: float) -> None:
-        """Add a new IMU measurement"""
-        point = IMUPoint(ax, ay, az, gx, gy, gz, timestamp)
-        self.imu_history.append(point)
-        self._process_point(point)
+        if len(self.calibration_samples_x) >= 10:  # Wait for at least 10 samples
+            x_std = np.std(self.calibration_samples_x)
+            y_std = np.std(self.calibration_samples_y)
+            
+            # Update X threshold (with bounds)
+            self.accel_threshold_x = max(250, min(500, x_std * 3.0))
+            
+            # Update Y threshold (with bounds)
+            self.accel_threshold_y = max(500, min(800, y_std * 3.0))
+            
+            print(f"Updated thresholds - X: {self.accel_threshold_x:.1f}, Y: {self.accel_threshold_y:.1f}")
+
+    def _is_at_rest(self, accel_raw):
+        """Determine if sensor is at rest"""
+        accel_diff = np.abs(accel_raw - self.accel_offset)
+        is_rest = np.all(accel_diff < self.rest_threshold)
+        self.rest_samples.append(is_rest)
+        return len(self.rest_samples) >= 3 and all(self.rest_samples)
+
+    def _is_y_stable(self, accel_y):
+        """Check if Y acceleration is stable"""
+        self.y_samples.append(accel_y)
+        if len(self.y_samples) < 3:
+            return False
+        y_variation = np.std(self.y_samples)
+        return y_variation < 200
 
     def _process_point(self, point: IMUPoint) -> None:
-        """Process new IMU data to update position and orientation"""
         if self.last_timestamp is None:
             self.last_timestamp = point.timestamp
             return
 
-        # Calculate time delta in seconds
         dt = (point.timestamp - self.last_timestamp) / 1000.0
-        
-        # Process accelerometer data
         accel_raw = np.array([point.ax, point.ay, point.az])
-        accel = accel_raw - self.accel_bias
         
-        # Process gyroscope data
-        gyro_raw = np.array([point.gx, point.gy, point.gz])
-        gyro = gyro_raw - self.gyro_bias
+        # Get acceleration relative to baseline
+        accel = accel_raw - self.accel_offset
         
-        # Apply noise thresholds
-        accel = np.where(np.abs(accel) < self.accel_threshold, 0, accel)
-        gyro = np.where(np.abs(gyro) < self.gyro_threshold, 0, gyro)
-        
-        # Update orientation using gyroscope data
-        angle = np.linalg.norm(gyro) * dt
-        if angle > 0:
-            axis = gyro / np.linalg.norm(gyro)
-            c = np.cos(angle)
-            s = np.sin(angle)
-            v = 1 - c
+        # Check if at rest
+        if self._is_at_rest(accel_raw):
+            if self.is_moving:  # Just came to rest
+                self.calibration_samples_x.clear()
+                self.calibration_samples_y.clear()
             
-            # Rodriguez rotation formula
-            rotation = np.array([
-                [axis[0]*axis[0]*v + c, axis[0]*axis[1]*v - axis[2]*s, axis[0]*axis[2]*v + axis[1]*s],
-                [axis[1]*axis[0]*v + axis[2]*s, axis[1]*axis[1]*v + c, axis[1]*axis[2]*v - axis[0]*s],
-                [axis[2]*axis[0]*v - axis[1]*s, axis[2]*axis[1]*v + axis[0]*s, axis[2]*axis[2]*v + c]
-            ])
-            
-            self.orientation = np.dot(rotation, self.orientation)
-        
-        # Transform acceleration to global frame
-        accel_global = np.dot(self.orientation, accel)
-        
-        # Remove gravity
-        gravity = np.array([0, 0, 9.81])
-        accel_global -= gravity
-        
-        # Update velocity using trapezoidal integration
-        self.velocity += 0.5 * (accel_global + self.last_accel) * dt
-        
-        # Apply velocity decay to prevent drift
-        decay_factor = 0.95
-        self.velocity *= decay_factor
-        
-        # Update position using trapezoidal integration
-        self.position += self.velocity * dt + 0.5 * accel_global * dt**2
-        
-        # Store current values for next iteration
-        self.last_accel = accel_global
-        self.last_gyro = gyro
+            self.is_moving = False
+            self.current_direction = np.zeros(3)
+            self._update_thresholds(accel)  # Update thresholds during rest
+            self.last_timestamp = point.timestamp
+            return
+
+        # If not moving, check for start of movement
+        if not self.is_moving:
+            # First check Y-axis movement
+            if abs(accel[1]) > self.accel_threshold_y:
+                self.is_moving = True
+                self.current_direction = np.zeros(3)
+                self.current_direction[1] = -np.sign(accel[1])
+            # Only check X-axis if Y is stable
+            elif self._is_y_stable(accel[1]) and abs(accel[0]) > self.accel_threshold_x:
+                self.is_moving = True
+                self.current_direction = np.zeros(3)
+                self.current_direction[0] = -np.sign(accel[0])
+
+        # If moving, update position based on current direction
+        if self.is_moving:
+            self.position += self.current_direction * self.movement_speed * dt
+
         self.last_timestamp = point.timestamp
 
+    def add_point(self, ax: float, ay: float, az: float, 
+                 gx: float, gy: float, gz: float, timestamp: float) -> None:
+        point = IMUPoint(ax, ay, az, gx, gy, gz, timestamp)
+        self._process_point(point)
+
     def get_current_position(self) -> Tuple[float, float, float]:
-        """Get the current calculated position"""
         return tuple(self.position)
 
     def get_plot_coordinates(self) -> Tuple[float, float, float]:
-        """Get the coordinates to be plotted (with z=0 when pen is down)"""
         x, y, z = self.position
-        plot_z = 0 if abs(z) < 1000 else 1
-        return (x, y, plot_z)
+        return (x, y, 0 if self.is_moving else 1)
 
     def reset(self) -> None:
-        """Reset the processor state"""
-        self.imu_history.clear()
-        self.velocity = np.zeros(3)
-        self.position = np.zeros(3)
-        self.orientation = np.eye(3)
-        self.last_timestamp = None
-        self.last_accel = np.zeros(3)
-        self.last_gyro = np.zeros(3)
-        self.last_velocity = np.zeros(3)
+        self.__init__(10)
