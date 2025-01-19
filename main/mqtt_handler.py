@@ -3,6 +3,7 @@ import paho.mqtt.client as mqtt
 import json
 import configparser
 from accel_to_draw import MotionProcessor, IMUPoint  # Changed import
+from logger import CoordinateLogger
 
 class MQTTHandler:
     def __init__(self, mongo_handler=None, plotter=None, config_path='config.properties'):
@@ -22,6 +23,9 @@ class MQTTHandler:
         # Store local sensor data
         self.current_accel = {'x': 0, 'y': 0, 'z': 0}
         self.current_gyro = {'x': 0, 'y': 0, 'z': 0}
+        
+        # Add this line after other initializations
+        self.logger = CoordinateLogger()
 
     def _load_config(self, config_path):
         config = configparser.ConfigParser()
@@ -63,6 +67,9 @@ class MQTTHandler:
             # Get the current position
             x, y, z = self.accel_processor.get_plot_coordinates()
             print(f"Calculated position: ({x}, {y}, {z})")
+            
+            # Log the coordinates
+            self.logger.log_coordinates(data, (x, y, z))
             
             # Add to plotter if available
             if self.plotter:
