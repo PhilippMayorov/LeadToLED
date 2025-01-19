@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
 import os
-import urllib.parse
 import certifi
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
@@ -82,43 +81,69 @@ class SessionViewer(tk.Tk):
     def load_sessions(self):
         # Get all sessions from MongoDB
         sessions = list(self.collection.find())
-        session_ids = [session['session_id'] for session in sessions]
-        self.session_dropdown['values'] = session_ids
         
-        # Store sessions data for later use
-        self.sessions_data = {session['session_id']: session for session in sessions}
+        # Create new user-friendly names
+        session_names = []
+        
+        # Prepare a dict to map the 'Session X' name to the actual session data
+        self.sessions_data = {}
+
+        for i, session in enumerate(sessions, start=1):
+            # Build a new name for each session
+            session_name = f"Session {i}"
+            session_names.append(session_name)
+            
+            # Store session data keyed by the new name
+            self.sessions_data[session_name] = session
+        
+        # Update the dropdown with the new session names
+        self.session_dropdown['values'] = session_names
 
     def on_session_select(self, event):
         selected_session = self.session_var.get()
         if selected_session:
             session_data = self.sessions_data[selected_session]
-            canvas_ids = [canvas['canvas_id'] for canvas in session_data['canvases']]
+            
+            # Create a list of "Canvas 1", "Canvas 2", etc.
+            canvas_display_names = [f"Canvas {i+1}" for i in range(len(session_data['canvases']))]
             
             # Show canvas selection elements
             self.canvas_label.pack(pady=(0, 5))
             self.canvas_dropdown.pack(pady=(0, 20))
             
-            self.canvas_dropdown['values'] = canvas_ids
-            self.canvas_var.set('')  # Reset canvas selection
+            # Set the display names in the dropdown
+            self.canvas_dropdown['values'] = canvas_display_names
+            self.canvas_var.set('')
+
+            # Store the mapping between display names and canvas IDs for later use
+            # self.canvas_mapping = dict(zip(canvas_display_names, 
+            #                             [canvas['canvas_id'] for canvas in session_data['canvases']]))
+            
 
     def on_canvas_select(self, event):
         selected_session = self.session_var.get()
-        selected_canvas = self.canvas_var.get()
+        selected_canvas_display = self.canvas_var.get()  # This is "Canvas 1", "Canvas 2", etc.
 
         plotter = Plotter(max_points=1000)
 
-        if selected_session and selected_canvas:
+        if selected_session and selected_canvas_display:
+            # Get the session data
             session_data = self.sessions_data[selected_session]
-            canvas_data = next(
-                (canvas for canvas in session_data['canvases'] 
-                    if canvas['canvas_id'] == selected_canvas), 
-                None
-            )
+            
+            # Get the index from the display name (subtract 1 because Canvas 1 corresponds to index 0)
+            canvas_index = int(selected_canvas_display.split()[1]) - 1
+            
+            # Get the canvas data using the index
+            canvas_data = session_data['canvases'][canvas_index]
             
             if canvas_data:
                 coordinates = canvas_data['coordinates']
+                print("Coordinates: ")
+                print(list(coordinates))
+
                 plotter.add_points(coordinates)
                 plotter.start_animation(interval=100)
+
 
 
 def main():

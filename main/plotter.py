@@ -121,7 +121,8 @@ class Plotter:
             self.fig,
             self._animate,
             interval=interval,
-            blit=True
+            blit=True,
+            cache_frame_data=False  # Disable caching
         )
         plt.show()
 

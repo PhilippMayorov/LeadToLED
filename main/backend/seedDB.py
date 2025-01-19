@@ -44,12 +44,12 @@ def create_session_with_canvases():
     # Create three sessions
     sessions_data = [
         {
-            "session_id": "session1",
+            # "session_id": "session1",
             "timestamp": datetime.now(),
             "canvases": [
                 {
-                    "canvas_id": "canvas1_1",
-                    "name": "First Canvas of Session 1",
+                    # "canvas_id": "canvas1_1",
+                    # "name": "First Canvas of Session 1",
                     "coordinates": [
                         {'x': 0, 'y': 0, 'z': 0},
                         {'x': 1, 'y': 1, 'z': 0},
@@ -64,8 +64,7 @@ def create_session_with_canvases():
                     ]
                 },
                 {
-                    "canvas_id": "canvas1_2",
-                    "name": "Second Canvas of Session 1",
+                    # "canvas_id": "canvas1_2",
                     "coordinates": [
                         {"x": i*15, "y": i*25, "z": i*35} for i in range(10)
                     ]
@@ -73,19 +72,17 @@ def create_session_with_canvases():
             ]
         },
         {
-            "session_id": "session2",
+            # "session_id": "session2",
             "timestamp": datetime.now(),
             "canvases": [
                 {
-                    "canvas_id": "canvas2_1",
-                    "name": "First Canvas of Session 2",
+                    # "canvas_id": "canvas2_1",
                     "coordinates": [
                         {"x": i*5, "y": i*15, "z": i*25} for i in range(10)
                     ]
                 },
                 {
-                    "canvas_id": "canvas2_2",
-                    "name": "Second Canvas of Session 2",
+                    # "canvas_id": "canvas2_2",
                     "coordinates": [
                         {"x": i*8, "y": i*18, "z": i*28} for i in range(10)
                     ]
@@ -93,19 +90,17 @@ def create_session_with_canvases():
             ]
         },
         {
-            "session_id": "session3",
+            # "session_id": "session3",
             "timestamp": datetime.now(),
             "canvases": [
                 {
-                    "canvas_id": "canvas3_1",
-                    "name": "First Canvas of Session 3",
+                    # "canvas_id": "canvas3_1",
                     "coordinates": [
                         {"x": i*12, "y": i*22, "z": i*32} for i in range(10)
                     ]
                 },
                 {
-                    "canvas_id": "canvas3_2",
-                    "name": "Second Canvas of Session 3",
+                    # "canvas_id": "canvas3_2",
                     "coordinates": [
                         {"x": i*7, "y": i*17, "z": i*27} for i in range(10)
                     ]
@@ -128,9 +123,3 @@ def get_all_sessions():
 create_session_with_canvases()
 
 # Retrieve and print the sessions to verify
-sessions = get_all_sessions()
-for session in sessions:
-    print(f"\nSession ID: {session['session_id']}")
-    for canvas in session['canvases']:
-        print(f"\tCanvas ID: {canvas['canvas_id']}")
-        print(f"\tNumber of coordinates: {len(canvas['coordinates'])}")
