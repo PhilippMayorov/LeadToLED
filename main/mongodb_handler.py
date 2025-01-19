@@ -36,12 +36,13 @@ class MongoDBHandler:
             print(f"MongoDB connection error: {e}")
             return False
 
-    def insert_coordinates(self, x, y, z):
+    def insert_coordinates(self, x, y, z, timestamp):
         try:
             coordinate_data = {
                 "x": x,
                 "y": y,
-                "z": z
+                "z": z,
+                "timestamp": timestamp
             }
             result = self.collection.insert_one(coordinate_data)
             print(f"Data inserted with record id {result.inserted_id}")
