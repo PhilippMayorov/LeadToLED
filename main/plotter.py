@@ -35,6 +35,10 @@ class Plotter:
 
     def add_point(self, x, y, z):
         """Add a single coordinate point to queue"""
+        # Reset plot if all coordinates are "-"
+        if x == "-" and y == "-" and z == "-":
+            self.clear()
+            return
         self.point_queue.put((x, y, z))
 
     def add_points(self, coordinates):
