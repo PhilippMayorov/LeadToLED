@@ -2,6 +2,7 @@
 from plotter import Plotter
 
 def test_simple_points():
+
     plotter = Plotter(max_points=1000)
     
     # Simple array of coordinates
