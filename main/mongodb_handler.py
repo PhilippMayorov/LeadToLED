@@ -76,18 +76,25 @@ class MongoDBHandler:
         except Exception as e:
             print(f"Error creating new canvas: {e}")
 
-    def insert_coordinates(self, x, y, z, timestamp):
-        """Insert coordinates into the current canvas"""
+    def insert_coordinates(self, accel_data, gyro_data, timestamp):
+        """Insert coordinates and sensor data into the current canvas"""
         try:
             # Check if this is a canvas separator
-            if x == "-" and y == "-" and z == "-":
+            if accel_data['x'] == "-" and accel_data['y'] == "-" and accel_data['z'] == "-":
                 self._create_new_canvas()
                 return True
 
             coordinate_data = {
-                "x": x,
-                "y": y,
-                "z": z,
+                "accelerometer": {
+                    "x": accel_data['x'],
+                    "y": accel_data['y'], 
+                    "z": accel_data['z']
+                },
+                "gyroscope": {
+                    "x": gyro_data['x'],
+                    "y": gyro_data['y'],
+                    "z": gyro_data['z']
+                },
                 "timestamp": timestamp
             }
 
