@@ -2,10 +2,15 @@ from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 import urllib.parse
 import certifi
+import configparser
+
+# Load configuration
+config = configparser.ConfigParser()
+config.read('config.properties')
 
 # Encode the password to handle special characters
-password = urllib.parse.quote_plus("digiPenPassword")
-username = "philipp"
+password = urllib.parse.quote_plus(config.get('mongo', 'password'))
+username = config.get('mongo', 'username')
 
 # Connection URI
 uri = f"mongodb+srv://{username}:{password}@digipencluster.laanv.mongodb.net/?retryWrites=true&w=majority&tlsAllowInvalidCertificates=true"
