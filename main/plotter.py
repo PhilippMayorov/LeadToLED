@@ -35,10 +35,6 @@ class Plotter:
 
     def add_point(self, x, y, z):
         """Add a single coordinate point to queue"""
-        # Reset plot if all coordinates are "-"
-        if x == "-" and y == "-" and z == "-":
-            self.clear()
-            return
         self.point_queue.put((x, y, z))
 
     def add_points(self, coordinates):
@@ -78,15 +74,15 @@ class Plotter:
             
             # Group continuous z=0 points into segments
             for x, y, z in zip(self.x_coords, self.y_coords, self.z_coords):
-                if z == 0:
-                    current_segment_x.append(x)
-                    current_segment_y.append(y)
-                else:
-                    if current_segment_x:
-                        segments_x.append(current_segment_x)
-                        segments_y.append(current_segment_y)
-                        current_segment_x = []
-                        current_segment_y = []
+                # if z == 0:
+                current_segment_x.append(x)
+                current_segment_y.append(y)
+                # else:
+                #     if current_segment_x:
+                #         segments_x.append(current_segment_x)
+                #         segments_y.append(current_segment_y)
+                #         current_segment_x = []
+                #         current_segment_y = []
             
             # Add the last segment if it exists
             if current_segment_x:
@@ -123,7 +119,7 @@ class Plotter:
         """Start animation"""
         self.animation = FuncAnimation(
             self.fig,
-            self._animate,
+            self._update_plot,
             interval=interval,
             blit=True
         )
