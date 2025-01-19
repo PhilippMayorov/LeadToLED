@@ -77,35 +77,19 @@ class MongoDBHandler:
             print(f"Error creating new canvas: {e}")
 
     def insert_coordinates(self, x, y, z, timestamp):
-        """Insert coordinates into the current canvas"""
+        """Insert coordinates and timestamp into the collection"""
         try:
-            # Check if this is a canvas separator
-            if x == "-" and y == "-" and z == "-":
-                self._create_new_canvas()
-                return True
-
             coordinate_data = {
                 "x": x,
                 "y": y,
                 "z": z,
                 "timestamp": timestamp
             }
-
-            # Update the specific canvas in the session
-            result = self.collection.update_one(
-                {"_id": self.current_session_id},
-                {"$push": {f"canvases.{self.current_canvas_id}.coordinates": coordinate_data}}
-            )
-
-            if result.modified_count > 0:
-                print(f"Coordinates inserted into canvas {self.current_canvas_id}")
-                return True
-            else:
-                print("Failed to insert coordinates")
-                return False
-
+            result = self.collection.insert_one(coordinate_data)
+            print(f"Data inserted with record id {result.inserted_id}")
+            return True
         except Exception as e:
-            print(f"Error inserting coordinates: {e}")
+            print(f"Error inserting data to MongoDB: {e}")
             return False
 
     def get_current_session(self):
