@@ -119,7 +119,7 @@ class Plotter:
         """Start animation"""
         self.animation = FuncAnimation(
             self.fig,
-            self._update_plot,
+            self._animate,
             interval=interval,
             blit=True
         )
