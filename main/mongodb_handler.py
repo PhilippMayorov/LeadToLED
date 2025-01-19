@@ -76,43 +76,20 @@ class MongoDBHandler:
         except Exception as e:
             print(f"Error creating new canvas: {e}")
 
-    def insert_coordinates(self, accel_data, gyro_data, timestamp):
-        """Insert coordinates and sensor data into the current canvas"""
+    def insert_coordinates(self, x, y, z, timestamp):
+        """Insert coordinates and timestamp into the collection"""
         try:
-            # Check if this is a canvas separator
-            if accel_data['x'] == "-" and accel_data['y'] == "-" and accel_data['z'] == "-":
-                self._create_new_canvas()
-                return True
-
             coordinate_data = {
-                "accelerometer": {
-                    "x": accel_data['x'],
-                    "y": accel_data['y'], 
-                    "z": accel_data['z']
-                },
-                "gyroscope": {
-                    "x": gyro_data['x'],
-                    "y": gyro_data['y'],
-                    "z": gyro_data['z']
-                },
+                "x": x,
+                "y": y,
+                "z": z,
                 "timestamp": timestamp
             }
-
-            # Update the specific canvas in the session
-            result = self.collection.update_one(
-                {"_id": self.current_session_id},
-                {"$push": {f"canvases.{self.current_canvas_id}.coordinates": coordinate_data}}
-            )
-
-            if result.modified_count > 0:
-                print(f"Coordinates inserted into canvas {self.current_canvas_id}")
-                return True
-            else:
-                print("Failed to insert coordinates")
-                return False
-
+            result = self.collection.insert_one(coordinate_data)
+            print(f"Data inserted with record id {result.inserted_id}")
+            return True
         except Exception as e:
-            print(f"Error inserting coordinates: {e}")
+            print(f"Error inserting data to MongoDB: {e}")
             return False
 
     def get_current_session(self):

@@ -2,7 +2,7 @@
 import paho.mqtt.client as mqtt
 import json
 import configparser
-from accel_to_draw import AccelerationProcessor
+from integrate import PositionIntegrator, SensorData
 
 class MQTTHandler:
     def __init__(self, mongo_handler=None, plotter=None, config_path='config.properties'):
@@ -15,10 +15,11 @@ class MQTTHandler:
         self.mongo_handler = mongo_handler
         self.plotter = plotter
         self.client = None
-        # Initialize the acceleration processor
-        self.accel_processor = AccelerationProcessor()
         
-        # Store local acceleration and gyro data
+        # Initialize the position integrator instead of motion processor
+        self.position_integrator = PositionIntegrator()
+        
+        # Store local sensor data
         self.current_accel = {'x': 0, 'y': 0, 'z': 0}
         self.current_gyro = {'x': 0, 'y': 0, 'z': 0}
 
@@ -48,37 +49,56 @@ class MQTTHandler:
             self.current_accel = data['accel']
             self.current_gyro = data['gyro']
             
-            # Process acceleration data to get position
-            self.accel_processor.add_point(
-                self.current_accel['x'],
-                self.current_accel['y'],
-                self.current_accel['z'],
-                data['timestamp'],
-                # gyro_x=self.current_gyro['x'],
-                # gyro_y=self.current_gyro['y'],
-                # gyro_z=self.current_gyro['z']
+            # Create SensorData object
+            sensor_data = SensorData(
+                timestamp=data['timestamp'],
+                accel=(
+                    self.current_accel['x'],
+                    self.current_accel['y'],
+                    self.current_accel['z']
+                ),
+                gyro=(
+                    self.current_gyro['x'],
+                    self.current_gyro['y'],
+                    self.current_gyro['z']
+                )
             )
             
-            # Get the current position
-            x, y, z = self.accel_processor.get_plot_coordinates()
-            print(f"Calculated position: ({x}, {y}, {z})")
+            # Process sensor data and get position if drawing
+            position = self.position_integrator.process_sensor_data(sensor_data)
+
+            print(position)
             
-            # Add to plotter if available
-            if self.plotter:
-                self.plotter.add_point(x, y, z)
+            if position:  # Only when we're drawing (z near surface)
+                x, y, z = position
+                print(f"Drawing position: ({x:.2f}, {y:.2f}, {z:.2f})")
+                
+                # Add to plotter if available
+                if self.plotter:
+                    self.plotter.add_point(x, y, z)
 
-            # Store in MongoDB if handler available
-            if self.mongo_handler:
-                self.mongo_handler.insert_coordinates(
-                    accel_data=self.current_accel,
-                    gyro_data=self.current_gyro,
-                    timestamp=data['timestamp']
-                )
-
-            if z == 0:
-                print("Point will be plotted (z=0)")
+                # Store in MongoDB if handler available
+                if self.mongo_handler:
+                    self.mongo_handler.collection.update_one(
+                        {
+                            "_id": self.mongo_handler.current_session_id,
+                            "canvases": {"$elemMatch": {"timestamp": {"$exists": True}}}
+                        },
+                        {
+                            "$push": {
+                                f"canvases.{self.mongo_handler.current_canvas_id}.coordinates": {
+                                    "x": x,
+                                    "y": y,
+                                    "z": z,
+                                    "timestamp": data['timestamp']
+                                }
+                            }
+                        }
+                    )
             else:
-                print("Point will be skipped (z≠0)")
+                # print("Not drawing (pen lifted)")
+                pass
+                
             print("-------------------")
             
         except Exception as e:
