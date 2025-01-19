@@ -1,8 +1,12 @@
-from pymongo.mongo_client import MongoClient
-from pymongo.server_api import ServerApi
+import os
 import urllib.parse
 import certifi
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
+from dotenv import load_dotenv
 import configparser
+
+load_dotenv()
 
 # Load configuration
 config = configparser.ConfigParser()
@@ -12,8 +16,7 @@ config.read('config.properties')
 password = urllib.parse.quote_plus(config.get('mongo', 'password'))
 username = config.get('mongo', 'username')
 
-# Connection URI
-uri = f"mongodb+srv://{username}:{password}@digipencluster.laanv.mongodb.net/?retryWrites=true&w=majority&tlsAllowInvalidCertificates=true"
+uri = os.getenv("uri")
 
 # Establish a MongoDB connection
 print("Before Client")
@@ -49,9 +52,9 @@ def insert_coordinates(x, y, z):
     print("Data inserted with record id", result.inserted_id)
 
 # Example usage of the function
-insert_coordinates(1, 2, 3)
-insert_coordinates(4, 5, 70)
-insert_coordinates(500, 600, 700)
-insert_coordinates(5000, 6000, 7000)
-insert_coordinates(50000, 60000, 70000)
+insert_coordinates(11, 22, 33)
+# insert_coordinates(4, 5, 70)
+# insert_coordinates(500, 600, 700)
+# insert_coordinates(5000, 6000, 7000)
+# insert_coordinates(50000, 60000, 70000)
 
