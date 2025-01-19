@@ -4,3 +4,6 @@ port=8883
 username=solace-cloud-client
 password=qhqjs8vvh83kt7svtqh4io2832
 
+[mongo]
+username=USER
+password=PASSWORD

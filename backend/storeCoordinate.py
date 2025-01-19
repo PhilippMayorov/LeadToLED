@@ -4,8 +4,17 @@ import certifi
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from dotenv import load_dotenv
+import configparser
 
 load_dotenv()
+
+# Load configuration
+config = configparser.ConfigParser()
+config.read('config.properties')
+
+# Encode the password to handle special characters
+password = urllib.parse.quote_plus(config.get('mongo', 'password'))
+username = config.get('mongo', 'username')
 
 uri = os.getenv("uri")
 
