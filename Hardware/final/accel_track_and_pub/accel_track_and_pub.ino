@@ -93,9 +93,13 @@ void loop() {
   if (millis() - lastMillis > 100) {
     // Read accelerometer data
     readAccelerometer();
+
+    // Get current timestamp
+    unsigned long timestamp = millis();
     
     // Create JSON string with accelerometer data
-    String jsonString = "{\"x\":" + String(accelerometer_x) + 
+    String jsonString = "{\"timestamp\":" + String(timestamp) + 
+                       ",\"x\":" + String(accelerometer_x) + 
                        ",\"y\":" + String(accelerometer_y) + 
                        ",\"z\":" + String(accelerometer_z) + "}";
     

@@ -34,6 +34,7 @@ class MQTTHandler:
             coordinates = json.loads(message.payload.decode())
             print(f"Received coordinates:")
             print(f"Location: ({coordinates['x']}, {coordinates['y']}, {coordinates['z']})")
+            print(f"Timestamp: {coordinates['timestamp']}")
             
             # Add to plotter if available
             if self.plotter:
@@ -48,7 +49,8 @@ class MQTTHandler:
                 self.mongo_handler.insert_coordinates(
                     coordinates['x'],
                     coordinates['y'],
-                    coordinates['z']
+                    coordinates['z'],
+                    coordinates['timestamp']
                 )
 
             if coordinates['z'] == 0:
