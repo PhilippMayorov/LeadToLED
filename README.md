@@ -1,4 +1,4 @@
-# LeadToLED: Digital Pen Motion Tracking System 🖊️✨
+# UottaHacks Winner: LeadToLED, A Digital Pen Motion Tracking System 🖊️✨
 
 LeadToLED is an innovative system that captures physical writing movements and converts them into digital data using accelerometer and gyroscope sensors. The project combines hardware and software components to track pen movements in real-time and visualize them digitally.
 
