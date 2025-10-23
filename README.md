@@ -1,4 +1,4 @@
-# UottaHacks Winner: LeadToLED, A Digital Pen Motion Tracking System 🖊️✨
+# LeadToLED, A Digital Pen Motion Tracking System 🖊️ (Winner for Best Hardware at University of Ottawa Hackathon )✨
 
 LeadToLED is an innovative system that captures physical writing movements and converts them into digital data using accelerometer and gyroscope sensors. The project combines hardware and software components to track pen movements in real-time and visualize them digitally.
 
